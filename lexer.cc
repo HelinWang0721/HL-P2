@@ -389,6 +389,7 @@ Token LexicalAnalyzer::GetToken()
 
     input.GetChar(c);
     switch (c) {
+#ifdef CHECK_ALL_SYMBOL
         case '.':
             tmp.token_type = DOT;
             return tmp;
@@ -398,6 +399,7 @@ Token LexicalAnalyzer::GetToken()
         case '-':
             tmp.token_type = MINUS;
             return tmp;
+#endif
         case '/': //////////////////////////////////
             // tmp.token_type = DIV;
             // scanComment();
@@ -407,9 +409,9 @@ Token LexicalAnalyzer::GetToken()
             // return tmp;
             tmp.token_type = DIV;
             return scanComment_or_div();
-        case '*':
-            tmp.token_type = MULT;
-            return tmp;
+        // case '*':
+        //     tmp.token_type = MULT;
+        //     return tmp;
         case '=':
             tmp.token_type = EQUAL;
             return tmp;
@@ -422,6 +424,7 @@ Token LexicalAnalyzer::GetToken()
         case ';':
             tmp.token_type = SEMICOLON;
             return tmp;
+#ifdef CHECK_ALL_SYMBOL
         case '[':
             tmp.token_type = LBRAC;
             return tmp;
@@ -434,12 +437,14 @@ Token LexicalAnalyzer::GetToken()
         case ')':
             tmp.token_type = RPAREN;
             return tmp;
+#endif
         case '{':
             tmp.token_type = LBRACE;
             return tmp;
         case '}':
             tmp.token_type = RBRACE;
             return tmp;
+#ifdef CHECK_ALL_SYMBOL
         case '<':
             input.GetChar(c);
             if (c == '=') {
@@ -464,6 +469,7 @@ Token LexicalAnalyzer::GetToken()
                 tmp.token_type = GREATER;
             }
             return tmp;
+#endif
         default:
             // input.UngetChar(c);
             // ScanBASE16NUM();
@@ -528,14 +534,19 @@ int main()
         if (token.token_type == ERROR) {
             exit_syntax_error();
         }
+#ifndef CHECK_ALL_SYMBOL
+        if (token.token_type == DIV) {
+            exit_syntax_error();
+        }
+#endif
+
         if (token.token_type == COMMENT || token.token_type ==  END_OF_FILE) continue;
         lexer.tokenList.push_back(token);
     }
 
-    for (int i = 0; i < lexer.tokenList.size(); i++) {
-        //lexer.tokenList[i].Print();
-    }
-
+    // for (int i = 0; i < lexer.tokenList.size(); i++) {
+    //     lexer.tokenList[i].Print();
+    // }
     //cout << "\n\n\n";
     
     FormatAnalyzer fa = FormatAnalyzer(lexer.tokenList);
@@ -545,6 +556,7 @@ int main()
     }
 
     //fa.globalScope.Print(0);
+    //cout << "\n\n";
 
     LineAnalysis la = LineAnalysis(fa);
     auto lStatus = la.scan();
@@ -553,7 +565,6 @@ int main()
     }
 
     //la.globalScope.Print(0);
-
     //cout << "\n\n";
 
     Evaluation evaluation = Evaluation(la);
