@@ -55,7 +55,9 @@ class LexicalAnalyzer {
     Token ScanRealNumber();
     Token ScanBASE08NUM();
     Token ScanBASE16NUM();
-    Token scanComment();
+    Token scanComment_or_div();
+
+    Token EOFToken();
 };
 
 

@@ -49,26 +49,50 @@ LexicalAnalyzer::LexicalAnalyzer()
     tmp.token_type = ERROR;
 }
 
-// void LexicalAnalyzer::readFile(std::string fileAbsPath) {
-//     input.readFile(fileAbsPath);
-// }
+Token LexicalAnalyzer::EOFToken() {
+    Token endOfFile_token;
+    endOfFile_token.lexeme = "";
+    endOfFile_token.line_no = this->line_no;
+    endOfFile_token.token_type = END_OF_FILE;
+    return endOfFile_token;
+}
 
-bool LexicalAnalyzer::SkipSpace()
+bool LexicalAnalyzer::SkipSpace() // return whather encountered space
 {
     char c;
     bool space_encountered = false;
 
-    input.GetChar(c);
-    line_no += (c == '\n');
+    // input.GetChar(c);
+    // line_no += (c == '\n');
 
-    while (!input.EndOfInput() && isspace(c)) {
-        space_encountered = true;
+    // while (!input.EndOfInput() && isspace(c)) {
+    //     space_encountered = true;
+    //     input.GetChar(c);
+    //     line_no += (c == '\n');
+    // }
+
+    // if (!input.EndOfInput()) {
+    //     input.UngetChar(c);
+    // }
+    // 
+    
+    while (true)
+    {
+        if (input.EndOfInput()) {
+            tmp.lexeme = "";
+            tmp.line_no = line_no;
+            tmp.token_type = END_OF_FILE;
+            break;
+        }
         input.GetChar(c);
-        line_no += (c == '\n');
-    }
-
-    if (!input.EndOfInput()) {
-        input.UngetChar(c);
+        if (isspace(c)) {
+            space_encountered = true;
+            line_no += (c == '\n');
+        }
+        else {
+            input.UngetChar(c);
+            break;
+        }
     }
     return space_encountered;
 }
@@ -135,28 +159,35 @@ Token LexicalAnalyzer::ScanNumber()
 
 Token LexicalAnalyzer::ScanIdOrKeyword()
 {
+    if (input.EndOfInput()) {
+        return EOFToken();
+    }
+
     char c;
     input.GetChar(c);
 
     if (isalpha(c)) {
         tmp.lexeme = "";
-        while (!input.EndOfInput() && isalnum(c)) {
-            tmp.lexeme += c;
+        tmp.lexeme += c;
+        while (!input.EndOfInput()) {
             input.GetChar(c);
-        }
-        if (!input.EndOfInput()) {
-            input.UngetChar(c);
+            if (!isalnum(c)) {
+                input.UngetChar(c);
+                break;
+            }
+            tmp.lexeme += c;
         }
         tmp.line_no = line_no;
+
         if (IsKeyword(tmp.lexeme))
             tmp.token_type = FindKeywordIndex(tmp.lexeme);
         else
             tmp.token_type = ID;
-    } else {
-        if (!input.EndOfInput()) {
-            input.UngetChar(c);
-        }
+    }
+    else {
+        input.UngetChar(c);
         tmp.lexeme = "";
+        tmp.line_no = line_no;
         tmp.token_type = ERROR;
     }
     return tmp;
@@ -274,7 +305,12 @@ Token LexicalAnalyzer::ScanBASE16NUM() {
     return tmp;
 }
 
-Token LexicalAnalyzer::scanComment() {
+Token LexicalAnalyzer::scanComment_or_div() {
+    if (input.EndOfInput()) { // when div is the last token before end of file
+        UngetToken(EOFToken());
+        return tmp;  // return DIV token
+    }
+    
     char c;
     input.GetChar(c);
 
@@ -282,17 +318,20 @@ Token LexicalAnalyzer::scanComment() {
         tmp.token_type = COMMENT;
         while (true) {
             if (input.EndOfInput()) {
-                tmp.token_type = END_OF_FILE;
+                UngetToken(EOFToken());
                 break;
             }
             input.GetChar(c);
-            if (c == '\n') break;
+            if (c == '\n') {
+                line_no++;
+                break;
+            }
         }
-        return tmp;
-
     }
-    input.UngetChar(c);
-    tmp.token_type = DIV;
+    else {
+        input.UngetChar(c);
+        tmp.token_type = DIV;
+    }
     return tmp;
 }
 
@@ -335,9 +374,19 @@ Token LexicalAnalyzer::GetToken()
         return tmp;
     }
 
-    SkipSpace();
     tmp.lexeme = "";
     tmp.line_no = line_no;
+
+    if (input.EndOfInput()) {
+        tmp.token_type = END_OF_FILE;
+        return tmp;
+    }
+
+    SkipSpace();
+    if(tmp.token_type == END_OF_FILE) {
+        return tmp;
+    }
+
     input.GetChar(c);
     switch (c) {
         case '.':
@@ -349,13 +398,15 @@ Token LexicalAnalyzer::GetToken()
         case '-':
             tmp.token_type = MINUS;
             return tmp;
-        case '/':
+        case '/': //////////////////////////////////
+            // tmp.token_type = DIV;
+            // scanComment();
+            // if (tmp.token_type != COMMENT && tmp.token_type != END_OF_FILE) {
+            //     tmp.token_type = DIV;
+            // }
+            // return tmp;
             tmp.token_type = DIV;
-            scanComment();
-            if (tmp.token_type != COMMENT && tmp.token_type != END_OF_FILE) {
-                tmp.token_type = DIV;
-            }
-            return tmp;
+            return scanComment_or_div();
         case '*':
             tmp.token_type = MULT;
             return tmp;
@@ -414,20 +465,21 @@ Token LexicalAnalyzer::GetToken()
             }
             return tmp;
         default:
-            input.UngetChar(c);
-            ScanBASE16NUM();
-            if (tmp.token_type == BASE16NUM) {
-                return tmp;
-            }
-            input.GetChar(c);
+            // input.UngetChar(c);
+            // ScanBASE16NUM();
+            // if (tmp.token_type == BASE16NUM) {
+            //     return tmp;
+            // }
+            // input.GetChar(c);
             if (isdigit(c)) {
-                input.UngetChar(c);
-                return ScanNumber();
-            } else if (isalpha(c)) {
+                // input.UngetChar(c);
+                // return ScanNumber();
+                tmp.token_type = ERROR;
+            }
+            else if (isalpha(c)) {
                 input.UngetChar(c);
                 return ScanIdOrKeyword();
-            } else if (input.EndOfInput())
-                tmp.token_type = END_OF_FILE;
+            }
             else
                tmp.token_type = ERROR;
 
