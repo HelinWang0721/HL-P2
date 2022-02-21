@@ -500,6 +500,11 @@ Token LexicalAnalyzer::GetToken()
             }
 */
 
+void exit_syntax_error() {
+    cout << "Syntax Error" << endl;
+    exit(1);
+}
+
 int main()
 {
     //string test = "C:\\Users\\13681\\source\\repos\\CSE340ass1\\Debug\\test_parsing_ok02.txt";
@@ -520,6 +525,9 @@ int main()
     {
         token = lexer.GetToken();
         //token.Print();
+        if (token.token_type == ERROR) {
+            exit_syntax_error();
+        }
         if (token.token_type == COMMENT || token.token_type ==  END_OF_FILE) continue;
         lexer.tokenList.push_back(token);
     }
@@ -533,8 +541,7 @@ int main()
     FormatAnalyzer fa = FormatAnalyzer(lexer.tokenList);
     Analysis_Status fStatus = fa.scan();
     if(fStatus == SYNTAX_ERROR) {
-        cout << "Syntax Error" << endl;
-        exit(1);
+        exit_syntax_error();
     }
 
     //fa.globalScope.Print(0);
@@ -542,8 +549,7 @@ int main()
     LineAnalysis la = LineAnalysis(fa);
     auto lStatus = la.scan();
     if (lStatus == SYNTAX_ERROR) {
-        cout << "Syntax Error" << endl;
-        exit(1);
+        exit_syntax_error();
     }
 
     //la.globalScope.Print(0);
@@ -554,8 +560,7 @@ int main()
     auto eStatus = evaluation.eval();
 
     if (eStatus == SYNTAX_ERROR) {
-        cout << "Syntax Error" << endl;
-        exit(1);
+        exit_syntax_error();
     }
 
     evaluation.printExpressionOutput();
