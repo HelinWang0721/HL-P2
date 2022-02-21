@@ -6,14 +6,12 @@ FormatAnalyzer::FormatAnalyzer(vector<Token> tokenList){
     this->tokenList = tokenList;
 }
 
-
 Analysis_Status FormatAnalyzer::scan() {
     int tokenIndex = 0;
     vector<Token> saveline;
     vector<Scope*> currentScope;
     currentScope.push_back(&globalScope);
     while(tokenIndex < tokenList.size()){
-        //tokenList[tokenIndex].Print();
         if (tokenList[tokenIndex].token_type == SEMICOLON) {
             Line* newLine = new Line(saveline);
             currentScope.back()->push(newLine);

@@ -1,5 +1,7 @@
 #include "LineAnalysis.h"
 
+//#define LINE_NO_CONSISTENT
+
 using namespace preEval;
 
 Equation::Equation(vector<Token>left, vector<Token>right, Line* line) {
@@ -100,6 +102,22 @@ vector<Token> rightValue_getExpression(vector<Token> rightTokens) {
     return ExpressionTokens;
 }
 
+bool checkLineNumberConsistent(vector<Token>& lineTokens) {
+    if (lineTokens.empty())
+        return false;
+
+    int lineNum = -1;
+    for (int i = 0; i < lineTokens.size(); i++) {
+        if (lineTokens[i].line_no != lineNum) {
+            if (lineNum == -1)
+                lineNum = lineTokens[i].line_no;
+            else
+                return false;
+        }
+    }
+    return true;
+}
+
 Analysis_Status LineAnalysis::leftORright(Line* line, Equation** newEquation) {
     int i = 0;
     vector<Token> leftTokens;
@@ -118,6 +136,11 @@ Analysis_Status LineAnalysis::leftORright(Line* line, Equation** newEquation) {
     if (rightTokens.empty() || leftTokens.empty())
         return SYNTAX_ERROR;
 
+#ifdef LINE_NO_CONSISTENT
+    if (!checkLineNumberConsistent(leftTokens) || !checkLineNumberConsistent(rightTokens)) {
+        return SYNTAX_ERROR;
+    }
+#endif
 
     vector<Token> leftIDs = leftValue_getIDs(leftTokens);
     vector<Token> rightExpression = rightValue_getExpression(rightTokens);
@@ -133,27 +156,42 @@ Analysis_Status LineAnalysis::leftORright(Line* line, Equation** newEquation) {
 
 Analysis_Status LineAnalysis::declLine(Line* line, Declaration** newDeclaration) {
     vector<Token> declTokens; // public ID ID
+    vector<Token>& lineTokens = line->tokens;
     int i = 0;
-    if (line->tokens[i].token_type == PUBLIC || line->tokens[i].token_type == PRIVATE) {
+    if (lineTokens[i].token_type == PUBLIC || lineTokens[i].token_type == PRIVATE) {
         i++;//to the next token, expect ":"
-        if (line->tokens[i].token_type == COLON) {
-            declTokens.push_back(line->tokens[0]);
+        if (i < lineTokens.size() && lineTokens[i].token_type == COLON) {
+            declTokens.push_back(lineTokens[0]);
             i++; //jump to next token, expect jump after ":"
         }
-        else return SYNTAX_ERROR;
+        else
+            return SYNTAX_ERROR;
+#ifdef LINE_NO_CONSISTENT
+        if (lineTokens[0].line_no != lineTokens[1].line_no)  // check "public:" line No. consistent;
+            return SYNTAX_ERROR;
+#endif
     }
 
     bool mustID = true;
-    for (; i < line->tokens.size(); i++) {
+    int lineNum = -1;
+    for (; i < lineTokens.size(); i++) {
         if (mustID && line->tokens[i].token_type != ID) {
             return SYNTAX_ERROR;
         }
-        else if (!mustID && line->tokens[i].token_type != COMMA) {
+        else if (!mustID && lineTokens[i].token_type != COMMA) {
             return SYNTAX_ERROR;
         }
-        if (line->tokens[i].token_type == ID) {
+        if (lineTokens[i].token_type == ID) {
             declTokens.push_back(line->tokens[i]);
         }
+#ifdef LINE_NO_CONSISTENT
+        if (lineTokens[i].line_no != lineNum) {  // check declaration line No. consistent
+            if (lineNum == -1)
+                lineNum = lineTokens[i].line_no;
+            else
+                return SYNTAX_ERROR;
+        }
+#endif
         mustID = !mustID;
     }
     *newDeclaration = new Declaration(line, declTokens);

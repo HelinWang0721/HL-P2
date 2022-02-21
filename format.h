@@ -23,7 +23,6 @@ public:
 
 class Scope: public prototype { // A block of code belong to same scope
 public:
-    
 	vector<prototype*> items;
     map<string, string> attr;
     Scope() {prototype::isScope = true;}
