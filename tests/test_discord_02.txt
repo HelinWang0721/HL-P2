@@ -1,0 +1,17 @@
+a, b;
+main {
+    public: b;
+    private: a;
+    nested {
+        public: b;
+        private: x;
+        a = b;
+        nested2 {
+            nested3 {
+                b = a;
+            }
+        }
+        x = b;
+        a = x;
+    }
+}

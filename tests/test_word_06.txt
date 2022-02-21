@@ -1,0 +1,8 @@
+a, b;
+
+main {
+    private: a;
+    nested {
+        a = b; // ::a = ::b
+    }
+}

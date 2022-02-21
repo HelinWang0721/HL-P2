@@ -1,0 +1,20 @@
+a, b, c;
+
+test {
+    public:
+        a, b, hello;
+    private:
+        x, y;
+
+    a = b;  //test.a = test.b
+    hello = c;  // test.hello = ::c
+    y = r;  // test.y = ?.r
+    nested {
+        public:
+            b;
+        a = b;  // test.a = nested.b
+        x = hello;  // ?.x = test.hello;
+        c = y;  // ::c = ?.y
+    }
+}
+

@@ -1,0 +1,4 @@
+::a = nested.b
+nested.b = ::a
+nested.x = nested.b
+::a = nested.x

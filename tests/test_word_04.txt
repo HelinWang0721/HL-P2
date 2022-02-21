@@ -1,0 +1,6 @@
+a;
+main {
+     private:
+         a;
+         a = a; // main.a = main.a
+}

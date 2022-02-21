@@ -1,0 +1,7 @@
+a;
+main {
+    public:
+        a;
+        a = a; // main.a = main.a
+}
+

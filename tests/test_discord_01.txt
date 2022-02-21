@@ -1,0 +1,13 @@
+a, b;
+main {
+
+    // a = b;
+        // public: a ;
+
+
+
+    public: b;
+    private: a;
+    b = a;
+    a = x;
+}

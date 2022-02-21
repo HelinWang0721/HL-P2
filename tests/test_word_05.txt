@@ -1,0 +1,7 @@
+a, b;
+
+main {
+    nested {
+        a = b; // ::a = ::b
+    }
+}
