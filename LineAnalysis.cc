@@ -38,6 +38,7 @@ Analysis_Status LineAnalysis::scan(Scope* s) {
         else { // line
             Line* linePtr = (Line*)scope[i];
             if (isExpression(linePtr)) { //expression 
+                if(!scope.hasAttr(CLASS_NAME_ATTR)) return SYNTAX_ERROR;
                 Equation* newEquation;
                 auto status = leftORright(linePtr, &newEquation);
                 if (status == SYNTAX_ERROR)
