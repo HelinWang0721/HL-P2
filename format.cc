@@ -7,7 +7,7 @@ FormatAnalyzer::FormatAnalyzer(vector<Token> tokenList){
 }
 
 Analysis_Status FormatAnalyzer::scan() {
-    int tokenIndex = 0;
+    int tokenIndex = 0,flag = 0;
     vector<Token> saveline;
     vector<Scope*> currentScope;
     currentScope.push_back(&globalScope);
@@ -18,6 +18,7 @@ Analysis_Status FormatAnalyzer::scan() {
             saveline.clear();
         }
         else if (tokenList[tokenIndex].token_type == LBRACE) {
+                      flag = 1;
             if (saveline.size() == 1 && saveline.front().token_type == ID) {  // is class_name {}
                 Scope* newScope = new Scope();  
                 newScope->addAttr(CLASS_NAME_ATTR, saveline[0].lexeme);    
@@ -34,6 +35,7 @@ Analysis_Status FormatAnalyzer::scan() {
             if (currentScope.size() == 1) return SYNTAX_ERROR;
             currentScope.pop_back();
         }
+        else if(tokenList[tokenIndex].token_type && flag == 1 && currentScope.size() == 1) return SYNTAX_ERROR;
         else {
             saveline.push_back(tokenList[tokenIndex]);
         }
